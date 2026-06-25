@@ -26,7 +26,7 @@ cp -r loops/template loops/my-project
 python -m loops.my-project.loop
 ```
 
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/peterlodri-sec/loopkit/blob/main/notebooks/loopkit_hello.ipynb)
+[▶️ Open in Colab](https://colab.research.google.com/github/peterlodri-sec/loopkit/blob/main/notebooks/loopkit_hello.ipynb)
 
 ---
 
