@@ -1,0 +1,13 @@
+[project]
+name = "loopkit"
+version = "0.1.0"
+description = "Loop Engineering Starter Kit — build self-improving systems"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+bot = ["python-telegram-bot>=20.0", "huggingface_hub>=0.20"]
+all = ["loopkit[bot]"]
+
+[tool.setuptools.packages.find]
+include = ["loops*", "bot*", "concepts*", "evals*"]
