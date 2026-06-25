@@ -26,6 +26,8 @@ python -m loops.hello.loop
 | Teach someone the concept | `concepts/` — self-labeling, evaluator-optimizer, council |
 | Run a daily repo health check | `loops/daily_triage/` — CI, issues, stale branches, outdated deps |
 | Add quality gates to any loop | `loops/verification/` — LangChain Level 2: grader checks, retries on failure |
+| Test if compression breaks agents | `loops/headroom_swebench/` — SWE-bench style: compare with/without compression |
+| Run CI safety gates for headroom | `evals/headroom_swebench.py` — exit 0=pass, 1=regression |
 
 ---
 
@@ -106,6 +108,8 @@ loopkit/
 │   ├── template/         ← Copy this for new loops
 │   ├── daily_triage/     ← Morning routine — CI, issues, deps
 │   ├── verification/     ← LangChain L2 — grader + retry
+│   ├── verification/     ← LangChain L2 — grader + retry
+│   ├── headroom_swebench/ ← Does compression break agents?
 │   └── kompress/         ← Full kompress pipeline
 ├── concepts/             ← Reference patterns
 │   ├── self_labeling.py
