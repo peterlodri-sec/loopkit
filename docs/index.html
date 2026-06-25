@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoopKit — Loop Engineering Starter Kit</title>
+<style>
+  :root { --bg: #0d1117; --fg: #c9d1d9; --accent: #3ee8c5; --card: #161b22; --border: #30363d; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--fg); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height:1.6; }
+  .hero { text-align:center; padding:80px 20px 40px; }
+  .hero h1 { font-size:3em; color:var(--accent); margin-bottom:10px; }
+  .hero p { font-size:1.2em; color:#8b949e; max-width:600px; margin:0 auto; }
+  .hero .cta { margin-top:30px; }
+  .hero .cta a { display:inline-block; padding:12px 28px; background:var(--accent); color:var(--bg); border-radius:6px; text-decoration:none; font-weight:600; margin:5px; }
+  .hero .cta a.secondary { background:var(--card); color:var(--accent); border:1px solid var(--accent); }
+  .section { max-width:900px; margin:0 auto; padding:40px 20px; }
+  .section h2 { color:var(--accent); font-size:1.8em; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:10px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px; margin-top:20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:24px; }
+  .card h3 { color:var(--accent); margin-bottom:12px; font-size:1.1em; }
+  .card p { color:#8b949e; font-size:0.95em; }
+  .card .cmd { background:#0d1117; padding:8px 12px; border-radius:4px; font-family:monospace; font-size:0.85em; margin-top:10px; color:var(--accent); }
+  table { width:100%; border-collapse:collapse; margin:20px 0; }
+  th, td { padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
+  th { color:var(--accent); font-weight:600; }
+  .quote { background:var(--card); border-left:3px solid var(--accent); padding:16px 20px; margin:20px 0; border-radius:0 8px 8px 0; font-style:italic; color:#8b949e; }
+  .quote strong { color:var(--fg); }
+  footer { text-align:center; padding:40px 20px; color:#8b949e; font-size:0.9em; }
+  a { color:var(--accent); }
+  .badge { display:inline-block; background:var(--card); border:1px solid var(--border); padding:4px 10px; border-radius:4px; font-size:0.85em; margin:3px; }
+  @media (max-width:600px) { .hero h1 { font-size:2em; } }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🔁 LoopKit</h1>
+  <p>Your loop engineering starter kit. Build self-improving systems that plan, execute, evaluate, and decide.</p>
+  <div class="cta">
+    <a href="https://github.com/peterlodri-sec/loopkit">GitHub →</a>
+    <a href="https://colab.research.google.com/github/peterlodri-sec/loopkit/blob/main/notebooks/loopkit_hello.ipynb" class="secondary">▶️ Open in Colab</a>
+  </div>
+  <div style="margin-top:15px">
+    <span class="badge">Python 3.10+</span>
+    <span class="badge">MIT License</span>
+    <span class="badge">5 loops</span>
+    <span class="badge">Telegram bot</span>
+    <span class="badge">Council</span>
+  </div>
+</div>
+
+<div class="section">
+  <h2>The Loop Pattern</h2>
+  <div class="grid">
+    <div class="card"><h3>🎯 plan</h3><p>Decide what experiment to run next. Which teacher? Which data? Which architecture?</p></div>
+    <div class="card"><h3>⚡ execute</h3><p>Run the experiment. Train the model. Generate the data. Ship the code.</p></div>
+    <div class="card"><h3>📊 evaluate</h3><p>Measure results against targets. Heretic exact. mk_in_ref. Token savings.</p></div>
+    <div class="card"><h3>🏛 decide</h3><p>SHIP, RETRAIN, PIVOT, or CONTINUE. The council reviews and decides.</p></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Real Results: The Kompress Loop</h2>
+  <p>15 models trained through this exact pattern:</p>
+  <table>
+    <tr><th>Version</th><th>What we tried</th><th>Heretic</th><th>Decision</th></tr>
+    <tr><td>v2</td><td>—</td><td>0.975</td><td>Baseline</td></tr>
+    <tr><td>v4</td><td>Self-labels</td><td>0.943</td><td>Override internalized</td></tr>
+    <tr style="background:#1a2a1a"><td><strong>v8</strong></td><td><strong>Qwen2.5 teacher</strong></td><td><strong>0.955</strong></td><td><strong>🚀 Production</strong></td></tr>
+    <tr><td>v11</td><td>Larger encoder</td><td>0.906</td><td>Capacity ≠ precision</td></tr>
+    <tr><td>v14</td><td>Council training</td><td>0.882</td><td>Concept proven</td></tr>
+  </table>
+  <p style="margin-top:10px"><a href="https://pocoo.vaked.dev/posts/2026-06-25-kompress-heretic-eval">→ Full story</a> · <a href="https://huggingface.co/PeetPedro">→ All 15 models</a></p>
+</div>
+
+<div class="section">
+  <h2>The Ecosystem</h2>
+  <div class="quote">
+    <strong>"You shouldn't be prompting coding agents anymore. You should be designing loops that prompt your agents."</strong> — Peter Steinberger
+  </div>
+  <div class="quote">
+    <strong>"I don't prompt Claude anymore. I have loops running that prompt Claude. My job is to write loops."</strong> — Boris Cherny, Head of Claude Code at Anthropic
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h3>📝 Addy Osmani</h3>
+      <p>The canonical essay — 5 building blocks + memory. The theory.</p>
+      <a href="https://addyosmani.com/blog/loop-engineering/">→ Read</a>
+    </div>
+    <div class="card">
+      <h3>📊 LangChain</h3>
+      <p>4 stacked loops: Agent → Verification → Event-Driven → Hill Climbing.</p>
+      <a href="https://www.langchain.com/blog/the-art-of-loop-engineering">→ Read</a>
+    </div>
+    <div class="card">
+      <h3>🔧 Cobus Greyling</h3>
+      <p>Reference implementation — npm tools, 7 patterns, goal engineering.</p>
+      <a href="https://github.com/cobusgreyling/loop-engineering">→ Explore</a>
+    </div>
+    <div class="card" style="border-color:var(--accent)">
+      <h3>🚀 LoopKit (this)</h3>
+      <p>Python-native starter kit — bot, council, Colab, kompress case study.</p>
+      <a href="https://github.com/peterlodri-sec/loopkit">→ GitHub</a>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Quick Start</h2>
+  <div class="card">
+    <div class="cmd">git clone https://github.com/peterlodri-sec/loopkit</div>
+    <div class="cmd">cd loopkit</div>
+    <div class="cmd">python -m loops.hello.loop</div>
+    <p style="margin-top:12px">5 iterations. SHIP. You just ran your first loop.</p>
+  </div>
+</div>
+
+<div class="section">
+  <h2>5 Loops Included</h2>
+  <div class="grid">
+    <div class="card"><h3>👋 hello</h3><p>5 lines. First loop. Counts to 5 and stops.</p></div>
+    <div class="card"><h3>📋 daily_triage</h3><p>Morning routine — CI failures, stale branches, outdated deps.</p></div>
+    <div class="card"><h3>✅ verification</h3><p>LangChain Level 2 — grader checks, retries on failure.</p></div>
+    <div class="card"><h3>🧪 headroom_swebench</h3><p>Does compression break agent behavior? SWE-bench style.</p></div>
+    <div class="card"><h3>🤖 kompress</h3><p>Full fine-tuning pipeline. 15 models. Real results.</p></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>7 Production Patterns</h2>
+  <table>
+    <tr><th>Pattern</th><th>What it does</th></tr>
+    <tr><td>Daily Triage</td><td>Reads CI, issues, commits → writes findings</td></tr>
+    <tr><td>PR Review</td><td>Sub-agent drafts → second reviews → opens PR</td></tr>
+    <tr><td>Dependency Update</td><td>Checks deps → updates → tests → PR</td></tr>
+    <tr><td>Release Notes</td><td>Reads commits → generates changelog → PR</td></tr>
+    <tr><td>Code Migration</td><td>Finds deprecated patterns → replaces → tests</td></tr>
+    <tr><td>Bug Hunt</td><td>Reads reports → searches codebase → proposes fix</td></tr>
+    <tr><td>Documentation Drift</td><td>Compares code to docs → flags gaps</td></tr>
+  </table>
+  <p style="margin-top:10px">From <a href="https://github.com/cobusgreyling/loop-engineering">cobusgreyling/loop-engineering</a></p>
+</div>
+
+<div class="section">
+  <h2>Telegram Bot</h2>
+  <div class="card">
+    <p>Your outer loop operator in chat. Create loops, run experiments, ask the council.</p>
+    <div class="cmd">export LOOPKIT_BOT_TOKEN="your_token"</div>
+    <div class="cmd">python -m bot.main</div>
+    <p style="margin-top:10px"><code>/new</code> <code>/run</code> <code>/decide</code> <code>/status</code> <code>/history</code></p>
+  </div>
+</div>
+
+<footer>
+  <p>LoopKit · MIT License · <a href="https://github.com/peterlodri-sec/loopkit">GitHub</a> · <a href="https://pocoo.vaked.dev/posts/2026-06-25-loopkit">Blog post</a> · <a href="https://huggingface.co/PeetPedro">Models</a></p>
+  <p style="margin-top:8px">Part of the loop engineering ecosystem with <a href="https://addyosmani.com/blog/loop-engineering/">Addy Osmani</a>, <a href="https://www.langchain.com/blog/the-art-of-loop-engineering">LangChain</a>, and <a href="https://github.com/cobusgreyling/loop-engineering">Cobus Greyling</a></p>
+</footer>
+
+</body>
+</html>
