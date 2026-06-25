@@ -96,6 +96,63 @@ council members (a "parliament") that debate before deciding.
 
 ---
 
+
+
+## The Loop Engineering Ecosystem
+
+LoopKit is part of a growing movement. Here's how the pieces connect:
+
+### The Canonical Essay — Addy Osmani
+
+[Addy Osmani's Loop Engineering](https://addyosmani.com/blog/loop-engineering/) defines the
+**5 building blocks + memory** that every loop needs:
+
+| Building Block | LoopKit Implementation |
+|---|---|
+| **Automations** — scheduled discovery & triage | `/run` command, `run_until()` loop |
+| **Worktrees** — safe parallel execution | Each loop has isolated `state_dir`, history |
+| **Skills** — persistent project knowledge | `concepts/` patterns, `GUIDE.md` |
+| **Plugins & Connectors** — MCP-based tools | `bot/` connects to Telegram, council to HF |
+| **Sub-agents** — maker/checker split | Council reviews results (checker), loops execute (maker) |
+| **Memory** — durable outside conversation | SQLite in `bot/memory.py`, `state.json` per loop |
+
+Key warnings from Addy that apply here:
+- **Verification is still on you** — the council is a tool, not a replacement for judgment
+- **Comprehension debt** — faster iteration = bigger gap between what you understand and what the loop produced. Read the loop's output.
+- **Cognitive surrender** — don't let the loop replace thinking. Design it with judgment.
+
+### The 4 Stacked Loops — LangChain
+
+[The Art of Loop Engineering](https://www.langchain.com/blog/the-art-of-loop-engineering) (swyx & LangChain)
+describes "loopcraft" as stacking loops for reliability:
+
+| Level | Loop | LoopKit Implementation |
+|---|---|---|
+| 1 | **Agent Loop** — model calls tools until done | `Loop.run()` — the core pattern |
+| 2 | **Verification Loop** — grader checks, retries | Council reviews results, decides SHIP/RETRAIN |
+| 3 | **Event-Driven Loop** — webhooks/cron trigger agents | Telegram bot (`bot/main.py`) — `/run` triggers |
+| 4 | **Hill Climbing Loop** — analysis agent rewrites the harness | Ralph Loop (`GUIDE.md` advanced section) — loop watching loops |
+
+The key insight from level 4: the return arrow "reaches inside and updates the agent loop directly."
+Ralph isn't just watching — it can suggest changes to your plan/execute/evaluate/decide logic based
+on what it observes across all your loops.
+
+### Reference Implementation — Cobus Greyling
+
+[cobusgreyling/loop-engineering](https://github.com/cobusgreyling/loop-engineering) is the most
+complete reference implementation. It includes:
+
+- **npm tools**: `loop-audit` (readiness score), `loop-init` (scaffolding), `loop-cost` (token estimation)
+- **7 production patterns**: Daily Triage, PR Review, Dependency Update, Release Notes, Code Migration, Bug Hunt, Documentation Drift
+- **Pattern picker**: Interactive tool that recommends which loop to build first
+- **Goal engineering**: `/goal` — run-until-done objectives with verification
+- **Stories**: Real wins and honest failures from production loops
+
+LoopKit complements this by providing the **Python-native** version with a Telegram bot,
+council, and the kompress case study. Use both — Cobus's tools for auditing and scaffolding,
+LoopKit for running and extending.
+
+
 ## Patterns
 
 These are the building blocks. Mix and match them in your loops.
@@ -141,6 +198,26 @@ human in the outer loop for faster iteration.
 5. Council reviews: ship, retrain, or pivot?
 6. Repeat
 ```
+
+### 6. The 7 Production Patterns (from Cobus Greyling)
+
+These are battle-tested loop patterns. Pick one, implement it, iterate.
+
+| Pattern | What it does | When to use |
+|---|---|---|
+| **Daily Triage** | Reads CI failures, open issues, recent commits → writes findings | Morning routine for any repo |
+| **PR Review** | Sub-agent drafts fix → second sub-agent reviews → opens PR | Automating code review |
+| **Dependency Update** | Checks for outdated deps → updates → runs tests → opens PR | Keeping dependencies fresh |
+| **Release Notes** | Reads commits since last tag → generates changelog → opens PR | Release automation |
+| **Code Migration** | Finds deprecated patterns → replaces → runs tests → PR | Framework upgrades |
+| **Bug Hunt** | Reads bug reports → searches codebase → proposes fix → PR | Automated debugging |
+| **Documentation Drift** | Compares code to docs → flags gaps → opens issue | Keeping docs in sync |
+
+Each pattern follows the same loop: **discover → plan → execute → verify → ship.**
+Sound familiar? It's `plan → execute → evaluate → decide` with a domain-specific name.
+
+See [cobusgreyling/loop-engineering/patterns](https://github.com/cobusgreyling/loop-engineering/tree/main/patterns)
+for full implementations.
 
 ---
 

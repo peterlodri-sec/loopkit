@@ -115,6 +115,48 @@ loopkit/
 
 ---
 
+## The Loop Engineering Ecosystem
+
+LoopKit is part of a growing movement. Here's the full picture:
+
+| Resource | What it offers |
+|---|---|
+| **[Addy Osmani: Loop Engineering](https://addyosmani.com/blog/loop-engineering/)** | The canonical essay — 5 building blocks + memory, practical patterns, warnings |
+| **[Cobus Greyling: loop-engineering](https://github.com/cobusgreyling/loop-engineering)** | Reference implementation with npm tools (loop-audit, loop-init, loop-cost), 7 patterns, pattern picker, goal engineering |
+| **[LangChain: The Art of Loop Engineering](https://www.langchain.com/blog/the-art-of-loop-engineering)** | 4 stacked loops (Agent → Verification → Event-Driven → Hill Climbing), "loopcraft" concept |
+| **LoopKit (this repo)** | Python-native starter kit with Telegram bot, council, Colab notebook, kompress case study |
+
+### Key concepts from the ecosystem
+
+**From Addy Osmani** — the 5 building blocks + memory:
+- **Automations**: Scheduled discovery & triage on a cadence
+- **Worktrees**: Safe parallel execution on isolated branches
+- **Skills**: Persistent project knowledge (`SKILL.md`)
+- **Plugins & Connectors**: MCP-based tools that reach into your stack
+- **Sub-agents**: Maker/checker split — the model that wrote code is too nice grading its own work
+- **Memory**: A markdown file outside conversation context — "the agent forgets, the repo does not"
+
+**From LangChain** — the 4 stacked loops:
+1. **Agent Loop**: Model calls tools until done
+2. **Verification Loop**: Grader checks output, retries if needed
+3. **Event-Driven Loop**: Webhooks/cron trigger agents automatically
+4. **Hill Climbing Loop**: Analysis agent reviews traces, rewrites the harness — *the loop that improves the loop*
+
+**From Cobus Greyling** — production tools:
+- `loop-audit` — scores your loop's readiness
+- `loop-init` — scaffolds new loops from patterns
+- `loop-cost` — estimates token spend before you run
+- 7 battle-tested patterns with real win/failure stories
+
+### How LoopKit fits
+
+LoopKit implements the **Agent Loop** (level 1) and **Verification Loop** (level 2) in Python,
+with the **Hill Climbing Loop** (level 4) via the Council. The **Event-Driven Loop** (level 3)
+is the Telegram bot. Combine with [cobusgreyling/loop-engineering](https://github.com/cobusgreyling/loop-engineering)
+for the full stack.
+
+---
+
 ## Further Reading
 
 - 📄 Anthropic: Engineering Groups of AI Agents (June 2025) (June 2025)
