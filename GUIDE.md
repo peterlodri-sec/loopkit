@@ -75,7 +75,7 @@ LoopKit automates this outer loop so you can scale it.
 
 ## Group Engineering
 
-In June 2025, Anthropic published [Engineering Groups of AI Agents](https://www.anthropic.com/engineering/engineering-groups-of-ai-agents) —
+In June 2025, Anthropic published Engineering Groups of AI Agents (Anthropic, June 2025) —
 a paper describing how multiple AI agents can collaborate in structured groups
 to accomplish complex engineering tasks.
 
@@ -174,7 +174,7 @@ Copy `loops/template/` and implement the four methods. The template includes:
 
 ## Reference
 
-- **[Anthropic: Engineering Groups of AI Agents](https://www.anthropic.com/engineering/engineering-groups-of-ai-agents)** — June 2025
+- **Anthropic: Engineering Groups of AI Agents (June 2025)** — June 2025
 - **[The kompress heretic benchmark](https://pocoo.vaked.dev/posts/2026-06-25-kompress-heretic-eval)** — full story of the 15-model loop
 - **[All kompress models on HuggingFace](https://huggingface.co/PeetPedro)** — model cards with benchmarks
 - **[Ultrawhale training repo](https://github.com/peterlodri-sec/ultrawhale)** — the loop that produced these models

@@ -117,7 +117,7 @@ loopkit/
 
 ## Further Reading
 
-- 📄 [Anthropic: Engineering Groups of AI Agents](https://www.anthropic.com/engineering/engineering-groups-of-ai-agents) (June 2025)
+- 📄 Anthropic: Engineering Groups of AI Agents (June 2025) (June 2025)
 - 📝 [The kompress heretic eval — full loop story](https://pocoo.vaked.dev/posts/2026-06-25-kompress-heretic-eval)
 - 🔧 [Headroom — the proxy that uses kompress](https://github.com/headroomlabs-ai/headroom)
 - 🧪 [Heretic — adversarial ablation testing](https://github.com/p-e-w/heretic)
@@ -125,3 +125,8 @@ loopkit/
 ---
 
 MIT License. Build loops. Ship models.
+
+
+---
+
+📝 [Blog post: Introducing LoopKit](https://pocoo.vaked.dev/posts/2026-06-25-loopkit)
