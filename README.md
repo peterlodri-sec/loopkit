@@ -24,6 +24,8 @@ python -m loops.hello.loop
 | See a real example | `loops/kompress/` — the full 15-model pipeline |
 | Run in a notebook | `notebooks/loopkit_hello.ipynb` — Colab-ready |
 | Teach someone the concept | `concepts/` — self-labeling, evaluator-optimizer, council |
+| Run a daily repo health check | `loops/daily_triage/` — CI, issues, stale branches, outdated deps |
+| Add quality gates to any loop | `loops/verification/` — LangChain Level 2: grader checks, retries on failure |
 
 ---
 
@@ -102,6 +104,8 @@ loopkit/
 │   ├── base.py           ← Abstract Loop class
 │   ├── hello/            ← Minimal example (start here!)
 │   ├── template/         ← Copy this for new loops
+│   ├── daily_triage/     ← Morning routine — CI, issues, deps
+│   ├── verification/     ← LangChain L2 — grader + retry
 │   └── kompress/         ← Full kompress pipeline
 ├── concepts/             ← Reference patterns
 │   ├── self_labeling.py
