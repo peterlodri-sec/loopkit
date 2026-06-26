@@ -1,80 +1,13 @@
-"""Headroom Eval Space — Level 4 Hill Climbing Loop.
-
-Hugging Face Space that continuously evaluates Headroom proxy builds
-against SWE-bench tasks, tracks behavioral regressions (extra tool calls,
-redundant loops), and exposes a live dashboard.
-
-Architecture:
-  cron → eval loop → headroom proxy → agent trajectories
-  → OpenTelemetry traces → HF Dataset → Gradio dashboard
-  → Telegram notifications → Council review
-
-Run:
-  python space/app.py
-"""
-
+"""Headroom Eval Space — Level 4 Hill Climbing Loop."""
 from __future__ import annotations
-
-import json
-import os
-import sys
-import threading
-import time
+import json, os, sys, threading, time
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import gradio as gr
-
-# OpenTelemetry — dogfooding our own observability
-from opentelemetry import trace, metrics
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.metrics import MeterProvider
-
-trace.set_tracer_provider(TracerProvider())
-metrics.set_meter_provider(MeterProvider())
-tracer = trace.get_tracer("headroom-eval")
-meter = metrics.get_meter("headroom-eval")
-eval_counter = meter.create_counter("eval.runs", "Number of eval runs")
-eval_histogram = meter.create_histogram("eval.duration_seconds", "Eval run duration")
-error_counter = meter.create_counter("eval.errors", "Number of eval errors")
 from headroom_runner import execute_swe_trajectory, TrajectoryMetrics, SWE_TASKS
 
-# ── Logging ────────────────────────────────────────────────────────
-import logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S"
-)
-log = logging.getLogger("headroom-eval")
-
-# ── Remote profiling (enable with HEADROOM_PROFILE=1) ──────────────
-import cProfile
-import pstats
-import io as _io
-_profile_enabled = os.environ.get("HEADROOM_PROFILE", "") == "1"
-_profiler = None
-
-def start_profile():
-    global _profiler
-    if _profile_enabled:
-        _profiler = cProfile.Profile()
-        _profiler.enable()
-        log.info("profiler started")
-
-def stop_profile():
-    global _profiler
-    if _profiler and _profile_enabled:
-        _profiler.disable()
-        s = _io.StringIO()
-        ps = pstats.Stats(_profiler, stream=s).sort_stats("cumtime")
-        ps.print_stats(30)
-        log.info("profiler results:\n%s", s.getvalue())
-        _profiler = None
-
-# ── State ────────────────────────────────────────────────────────────
 STATE_DIR = Path(os.environ.get("HEADROOM_EVAL_STATE", "/data/eval_state"))
 STATE_DIR.mkdir(parents=True, exist_ok=True)
 STATE_FILE = STATE_DIR / "eval_state.json"
@@ -90,137 +23,78 @@ eval_history: list[dict] = []
 eval_running = False
 eval_thread = None
 
-
 def load_state():
     global eval_history
     if STATE_FILE.exists():
         eval_history = json.loads(STATE_FILE.read_text())
 
-
-def save_state()
-            duration = time.perf_counter() - t_start
-            eval_histogram.record(duration, {"compressor": compressor}):
+def save_state():
     STATE_FILE.write_text(json.dumps(eval_history, indent=2, default=str))
 
-
 def push_to_hf_dataset():
-    """Push eval traces to HuggingFace Dataset."""
     try:
         from datasets import Dataset
         ds = Dataset.from_list([r for r in eval_history])
         ds.push_to_hub("PeetPedro/headroom-eval-traces", token=os.environ.get("HF_TOKEN"))
-        return "✓ pushed to HF Dataset"
-    except Exception as e:
-        return f"dataset push skipped: {e}"
-
-
-# ── Eval loop (background) ───────────────────────────────────────────
+        return "pushed to HF Dataset"
+    except Exception:
+        return "dataset push skipped"
 
 def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
-    log.info("eval_loop started — compressor=%s proxy=%s interval=%ds", compressor, proxy_url, interval_sec)
-    with tracer.start_as_current_span("eval_loop") as span:
-        span.set_attribute("compressor", compressor)
-        span.set_attribute("proxy_url", proxy_url)
-        eval_counter.add(1, {"compressor": compressor})
-    """Persistent eval loop — runs every hour or on trigger."""
     global eval_running
     eval_running = True
-
     while eval_running:
-                run_id = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-        log.info("eval run starting — compressor=%s", compressor)
-        t_start = time.perf_counter()("%Y%m%d-%H%M%S")
-        print(f"[eval] run {run_id} — compressor={compressor} proxy={proxy_url}")
-
+        run_id = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        t_start = time.perf_counter()
         try:
-            metrics = execute_swe_trajectory(
-                proxy_url=proxy_url,
-                compressor=compressor,
-            )
-
+            metrics = execute_swe_trajectory(proxy_url=proxy_url, compressor=compressor)
             for m in metrics:
                 record = m.to_dict()
                 record["run_id"] = run_id
                 record["timestamp"] = datetime.now(timezone.utc).isoformat()
                 eval_history.append(record)
-
-            # Summary
             success = sum(1 for m in metrics if m.task_success)
             regressions = sum(1 for m in metrics if m.redundant_loops > 0)
-            print(f"[eval] {run_id}: {success}/{len(metrics)} success, {regressions} regressions")
-
+            print(f"[eval] {run_id}: {success}/{len(metrics)} ok, {regressions} regressions, {time.perf_counter()-t_start:.1f}s")
             save_state()
-            duration = time.perf_counter() - t_start
-            eval_histogram.record(duration, {"compressor": compressor})
             push_to_hf_dataset()
-
         except Exception as e:
-            log.error("eval run %s FAILED: %s", run_id, e, exc_info=True)
-            eval_history.append({
-                "run_id": run_id, "error": str(e),
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            })
-            save_state()
-            duration = time.perf_counter() - t_start
-            eval_histogram.record(duration, {"compressor": compressor})
-
-        # Sleep until next interval (with 1s polling for stop signal)
+            print(f"[eval] {run_id} FAILED: {e}")
         for _ in range(interval_sec):
             if not eval_running:
                 break
             time.sleep(1)
 
-
 def start_eval(proxy_url: str, compressor: str, interval: int = 3600):
-    log.info("start_eval called — compressor=%s proxy=%s interval=%ds", compressor, proxy_url, interval)
-    start_profile()
     global eval_thread, eval_running
     if eval_running:
-        return "⚠️ Eval already running"
-    eval_thread = threading.Thread(
-        target=eval_loop,
-        args=(proxy_url, compressor, interval),
-        daemon=True,
-    )
+        return "Already running"
+    eval_thread = threading.Thread(target=eval_loop, args=(proxy_url, compressor, interval), daemon=True)
     eval_thread.start()
-    return f"▶️ Eval started — {compressor} @ {proxy_url}, every {interval}s"
-
+    return f"Started {compressor} @ {proxy_url}"
 
 def stop_eval():
     global eval_running
     eval_running = False
-    stop_profile()
-    log.info("eval stopped")
-    return "⏹ Eval stopped"
-
-
-# ── Gradio Dashboard ──────────────────────────────────────────────────
+    return "Stopped"
 
 def build_regression_matrix():
-    """Live chart: tool calls per task over time."""
     if not eval_history:
-        return "No data yet. Start an eval run."
-
-    # Group by task_id, compute recent averages
+        return "No data yet."
     from collections import defaultdict
     by_task = defaultdict(list)
-    for r in eval_history[-50:]:  # last 50 runs
+    for r in eval_history[-50:]:
         if "task_id" in r:
             by_task[r["task_id"]].append(r["total_tool_calls"])
-
-    lines = ["| Task | Avg Tools | Runs | Status |", "|---|---|---|---|"]
-    for task_id, calls in sorted(by_task.items()):
-        avg = sum(calls) / len(calls)
-        status = "⚠️ HIGH" if avg > 6 else "✅ OK"
-        lines.append(f"| {task_id} | {avg:.1f} | {len(calls)} | {status} |")
+    lines = ["| Task | Avg Tools | Runs |", "|---|---|---|"]
+    for tid, calls in sorted(by_task.items()):
+        lines.append(f"| {tid} | {sum(calls)/len(calls):.1f} | {len(calls)} |")
     return "\n".join(lines)
 
-
 def build_recent_runs():
-    """Last 10 eval runs."""
     if not eval_history:
         return "No runs yet."
-    lines = ["| Run ID | Tasks | Success | Loops |", "|---|---|---|---|"]
+    lines = ["| Run | Tasks | Success | Loops |", "|---|---|---|---|"]
     seen = set()
     for r in reversed(eval_history):
         rid = r.get("run_id", "?")
@@ -228,96 +102,44 @@ def build_recent_runs():
             continue
         seen.add(rid)
         runs = [x for x in eval_history if x.get("run_id") == rid]
-        success = sum(1 for x in runs if x.get("task_success"))
-        loops = sum(x.get("redundant_loops", 0) for x in runs)
-        lines.append(f"| {rid} | {len(runs)} | {success} | {loops} |")
+        lines.append(f"| {rid} | {len(runs)} | {sum(1 for x in runs if x.get('task_success'))} | {sum(x.get('redundant_loops',0) for x in runs)} |")
         if len(seen) >= 10:
             break
     return "\n".join(lines)
 
-
-def build_efficiency_chart():
-    """Token efficiency ratio over time."""
-    if not eval_history:
-        return "No data."
-    ratios = [r.get("token_efficiency_ratio", 1.0) for r in eval_history[-20:] if "token_efficiency_ratio" in r]
-    if not ratios:
-        return "No efficiency data."
-    avg = sum(ratios) / len(ratios)
-    return f"Avg efficiency: {avg:.3f} | Min: {min(ratios):.3f} | Max: {max(ratios):.3f}"
-
-
-def trigger_manual_run(proxy_url: str, compressor: str):
-    """Manual trigger — runs once and returns results."""
+def trigger_manual_run(proxy_url, compressor):
     metrics = execute_swe_trajectory(proxy_url=proxy_url, compressor=compressor)
-    lines = ["| Task | Tools | Loops | Success | Tokens Saved |", "|---|---|---|---|---|"]
+    lines = ["| Task | Tools | Loops | OK |", "|---|---|---|---|"]
     for m in metrics:
-        icon = "✅" if m.task_success else "❌"
-        lines.append(f"| {m.task_id} | {m.total_tool_calls} | {m.redundant_loops} | {icon} | {m.tokens_saved} |")
+        lines.append(f"| {m.task_id} | {m.total_tool_calls} | {m.redundant_loops} | {'yes' if m.task_success else 'no'} |")
     return "\n".join(lines)
 
+def refresh_dashboard():
+    return build_regression_matrix(), build_recent_runs()
 
-# ── UI ────────────────────────────────────────────────────────────────
-
-with gr.Blocks(title="Headroom Eval Space — Hill Climbing Loop", theme="soft") as demo:
-    gr.Markdown("""
-    # 🏔️ Headroom Eval Space — Level 4 Hill Climbing Loop
-    
-    Persistent evaluation engine for the Headroom proxy.
-    Tracks behavioral regressions: does compression cause extra tool calls or redundant loops?
-    """)
-
+with gr.Blocks(title="Headroom Eval Space", theme="soft") as demo:
+    gr.Markdown("# Headroom Eval Space — Level 4 Hill Climbing Loop")
     with gr.Row():
         with gr.Column(scale=1):
-            gr.Markdown("### ⚙️ Control")
-            proxy_input = gr.Textbox(label="Proxy URL", value="http://localhost:18721")
-            compressor_input = gr.Dropdown(label="Compressor", choices=COMPRESSORS, value=COMPRESSORS[0])
-            interval_input = gr.Slider(label="Interval (seconds)", minimum=60, maximum=86400, value=3600, step=60)
+            proxy = gr.Textbox(label="Proxy URL", value="http://localhost:18721")
+            compressor = gr.Dropdown(label="Compressor", choices=COMPRESSORS, value=COMPRESSORS[0])
+            interval = gr.Slider(label="Interval (s)", minimum=60, maximum=86400, value=3600, step=60)
             with gr.Row():
-                start_btn = gr.Button("▶️ Start Eval Loop", variant="primary")
-                stop_btn = gr.Button("⏹ Stop")
-                trigger_btn = gr.Button("🔄 Manual Run")
-            status_text = gr.Textbox(label="Status", interactive=False)
-
+                start_btn = gr.Button("Start Loop", variant="primary")
+                stop_btn = gr.Button("Stop")
+                trigger_btn = gr.Button("Manual Run")
+            status = gr.Textbox(label="Status", interactive=False)
         with gr.Column(scale=2):
-            gr.Markdown("### 📊 Regression Matrix")
-            matrix_display = gr.Markdown(value="No data yet. Start an eval run.")
-
+            matrix = gr.Markdown("Regression matrix will appear here")
     with gr.Row():
-        with gr.Column():
-            gr.Markdown("### 📜 Recent Runs")
-            runs_display = gr.Markdown(value="No runs yet.")
-        with gr.Column():
-            gr.Markdown("### ⚡ Token Efficiency")
-            efficiency_display = gr.Markdown(value="No data.")
-
-    with gr.Row():
-        gr.Markdown("### 🔬 Manual Run Results")
-        manual_display = gr.Markdown(value="Click 'Manual Run' to see results.")
-
-    # Events
-    start_btn.click(
-        fn=start_eval,
-        inputs=[proxy_input, compressor_input, interval_input],
-        outputs=[status_text],
-    )
-    stop_btn.click(fn=stop_eval, outputs=[status_text])
-    trigger_btn.click(
-        fn=trigger_manual_run,
-        inputs=[proxy_input, compressor_input],
-        outputs=[manual_display],
-    )
-
-    # Periodic refresh
-    def refresh_dashboard():
-        return build_regression_matrix(), build_recent_runs(), build_efficiency_chart()
-
+        runs_display = gr.Markdown("Recent runs will appear here")
+    manual_display = gr.Markdown("Manual run results")
+    start_btn.click(fn=start_eval, inputs=[proxy, compressor, interval], outputs=[status])
+    stop_btn.click(fn=stop_eval, outputs=[status])
+    trigger_btn.click(fn=trigger_manual_run, inputs=[proxy, compressor], outputs=[manual_display])
     demo.load(load_state)
-    demo.load(refresh_dashboard, outputs=[matrix_display, runs_display, efficiency_display], every=30)
-
+    demo.load(refresh_dashboard, outputs=[matrix, runs_display], every=30)
 
 if __name__ == "__main__":
-    log.info("headroom-eval Space starting — profile=%s state_dir=%s", _profile_enabled, STATE_DIR)
     load_state()
-    log.info("Gradio dashboard ready — http://0.0.0.0:7860")
     demo.queue().launch(server_name="0.0.0.0", server_port=7860)
