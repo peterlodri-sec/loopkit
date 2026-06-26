@@ -26,6 +26,19 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import gradio as gr
+
+# OpenTelemetry — dogfooding our own observability
+from opentelemetry import trace, metrics
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.metrics import MeterProvider
+
+trace.set_tracer_provider(TracerProvider())
+metrics.set_meter_provider(MeterProvider())
+tracer = trace.get_tracer("headroom-eval")
+meter = metrics.get_meter("headroom-eval")
+eval_counter = meter.create_counter("eval.runs", "Number of eval runs")
+eval_histogram = meter.create_histogram("eval.duration_seconds", "Eval run duration")
+error_counter = meter.create_counter("eval.errors", "Number of eval errors")
 from evals.headroom_runner import execute_swe_trajectory, TrajectoryMetrics, SWE_TASKS
 
 # ── State ────────────────────────────────────────────────────────────
@@ -51,7 +64,9 @@ def load_state():
         eval_history = json.loads(STATE_FILE.read_text())
 
 
-def save_state():
+def save_state()
+            duration = time.perf_counter() - t_start
+            eval_histogram.record(duration, {"compressor": compressor}):
     STATE_FILE.write_text(json.dumps(eval_history, indent=2, default=str))
 
 
@@ -69,12 +84,17 @@ def push_to_hf_dataset():
 # ── Eval loop (background) ───────────────────────────────────────────
 
 def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
+    with tracer.start_as_current_span("eval_loop") as span:
+        span.set_attribute("compressor", compressor)
+        span.set_attribute("proxy_url", proxy_url)
+        eval_counter.add(1, {"compressor": compressor})
     """Persistent eval loop — runs every hour or on trigger."""
     global eval_running
     eval_running = True
 
     while eval_running:
-        run_id = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+                run_id = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        t_start = time.perf_counter()("%Y%m%d-%H%M%S")
         print(f"[eval] run {run_id} — compressor={compressor} proxy={proxy_url}")
 
         try:
@@ -95,6 +115,8 @@ def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
             print(f"[eval] {run_id}: {success}/{len(metrics)} success, {regressions} regressions")
 
             save_state()
+            duration = time.perf_counter() - t_start
+            eval_histogram.record(duration, {"compressor": compressor})
             push_to_hf_dataset()
 
         except Exception as e:
@@ -104,6 +126,8 @@ def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             save_state()
+            duration = time.perf_counter() - t_start
+            eval_histogram.record(duration, {"compressor": compressor})
 
         # Sleep until next interval (with 1s polling for stop signal)
         for _ in range(interval_sec):
