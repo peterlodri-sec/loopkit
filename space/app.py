@@ -39,7 +39,40 @@ meter = metrics.get_meter("headroom-eval")
 eval_counter = meter.create_counter("eval.runs", "Number of eval runs")
 eval_histogram = meter.create_histogram("eval.duration_seconds", "Eval run duration")
 error_counter = meter.create_counter("eval.errors", "Number of eval errors")
-from evals.headroom_runner import execute_swe_trajectory, TrajectoryMetrics, SWE_TASKS
+from headroom_runner import execute_swe_trajectory, TrajectoryMetrics, SWE_TASKS
+
+# ── Logging ────────────────────────────────────────────────────────
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S"
+)
+log = logging.getLogger("headroom-eval")
+
+# ── Remote profiling (enable with HEADROOM_PROFILE=1) ──────────────
+import cProfile
+import pstats
+import io as _io
+_profile_enabled = os.environ.get("HEADROOM_PROFILE", "") == "1"
+_profiler = None
+
+def start_profile():
+    global _profiler
+    if _profile_enabled:
+        _profiler = cProfile.Profile()
+        _profiler.enable()
+        log.info("profiler started")
+
+def stop_profile():
+    global _profiler
+    if _profiler and _profile_enabled:
+        _profiler.disable()
+        s = _io.StringIO()
+        ps = pstats.Stats(_profiler, stream=s).sort_stats("cumtime")
+        ps.print_stats(30)
+        log.info("profiler results:\n%s", s.getvalue())
+        _profiler = None
 
 # ── State ────────────────────────────────────────────────────────────
 STATE_DIR = Path(os.environ.get("HEADROOM_EVAL_STATE", "/data/eval_state"))
@@ -84,6 +117,7 @@ def push_to_hf_dataset():
 # ── Eval loop (background) ───────────────────────────────────────────
 
 def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
+    log.info("eval_loop started — compressor=%s proxy=%s interval=%ds", compressor, proxy_url, interval_sec)
     with tracer.start_as_current_span("eval_loop") as span:
         span.set_attribute("compressor", compressor)
         span.set_attribute("proxy_url", proxy_url)
@@ -94,6 +128,7 @@ def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
 
     while eval_running:
                 run_id = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        log.info("eval run starting — compressor=%s", compressor)
         t_start = time.perf_counter()("%Y%m%d-%H%M%S")
         print(f"[eval] run {run_id} — compressor={compressor} proxy={proxy_url}")
 
@@ -120,7 +155,7 @@ def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
             push_to_hf_dataset()
 
         except Exception as e:
-            print(f"[eval] {run_id} FAILED: {e}")
+            log.error("eval run %s FAILED: %s", run_id, e, exc_info=True)
             eval_history.append({
                 "run_id": run_id, "error": str(e),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -137,6 +172,8 @@ def eval_loop(proxy_url: str, compressor: str, interval_sec: int = 3600):
 
 
 def start_eval(proxy_url: str, compressor: str, interval: int = 3600):
+    log.info("start_eval called — compressor=%s proxy=%s interval=%ds", compressor, proxy_url, interval)
+    start_profile()
     global eval_thread, eval_running
     if eval_running:
         return "⚠️ Eval already running"
@@ -152,6 +189,8 @@ def start_eval(proxy_url: str, compressor: str, interval: int = 3600):
 def stop_eval():
     global eval_running
     eval_running = False
+    stop_profile()
+    log.info("eval stopped")
     return "⏹ Eval stopped"
 
 
@@ -278,5 +317,7 @@ with gr.Blocks(title="Headroom Eval Space — Hill Climbing Loop", theme="soft")
 
 
 if __name__ == "__main__":
+    log.info("headroom-eval Space starting — profile=%s state_dir=%s", _profile_enabled, STATE_DIR)
     load_state()
+    log.info("Gradio dashboard ready — http://0.0.0.0:7860")
     demo.queue().launch(server_name="0.0.0.0", server_port=7860)
