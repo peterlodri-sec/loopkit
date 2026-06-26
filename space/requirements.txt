@@ -1,0 +1,5 @@
+gradio>=4.0
+datasets
+huggingface_hub
+opentelemetry-api
+opentelemetry-sdk
