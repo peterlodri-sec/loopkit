@@ -174,7 +174,8 @@ def main():
 
     tasks = TASKS
     if args.tasks_file:
-        tasks = [Task(**json.loads(l)) for l in open(args.tasks_file)]
+        with open(args.tasks_file) as f:
+            tasks = [Task(**json.loads(line)) for line in f]
 
     report = run_benchmark(args.proxy, args.api_key, tasks, args.min_safety)
 

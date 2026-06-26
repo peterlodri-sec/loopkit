@@ -180,16 +180,16 @@ class HeadroomSWEBenchLoop(Loop):
 if __name__ == "__main__":
     loop = HeadroomSWEBenchLoop()
     print("🧪 Headroom SWE-bench — does compression break agents?\n")
-    
+
     for i in range(3):
         exp = loop.run()
-        m = exp.results.get("evaluate_output") or {}
+        m = loop.evaluate(exp.results)
         status = "⚠️ BROKEN" if m.get("compression_broke_it") else "✅ OK"
-        print(f"  {exp.id}: {m.get('task','?')} → {status} "
-              f"(saved {m.get('token_savings_pct',0)}% tokens)")
-    
-    print(f"\nVerdict: compression is safe" if all(
-        not (json.loads(json.dumps(e.results)) if isinstance(e.results, str) else e.results)
-        .get("compression_broke_it", False)
+        print(f"  {exp.id}: {m.get('task', '?')} → {status} "
+              f"(saved {m.get('token_savings_pct', 0)}% tokens)")
+
+    safe = all(
+        not loop.evaluate(e.results).get("compression_broke_it", False)
         for e in loop.history
-    ) else "Verdict: compression causes regressions — investigate!")
+    )
+    print(f"\nVerdict: {'compression is safe' if safe else 'compression causes regressions — investigate!'}")

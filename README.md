@@ -108,7 +108,6 @@ loopkit/
 │   ├── template/         ← Copy this for new loops
 │   ├── daily_triage/     ← Morning routine — CI, issues, deps
 │   ├── verification/     ← LangChain L2 — grader + retry
-│   ├── verification/     ← LangChain L2 — grader + retry
 │   ├── headroom_swebench/ ← Does compression break agents?
 │   └── kompress/         ← Full kompress pipeline
 ├── concepts/             ← Reference patterns
@@ -167,7 +166,7 @@ for the full stack.
 
 ## Further Reading
 
-- 📄 Anthropic: Engineering Groups of AI Agents (June 2025) (June 2025)
+- 📄 Anthropic: Engineering Groups of AI Agents (June 2025)
 - 📝 [The kompress heretic eval — full loop story](https://pocoo.vaked.dev/posts/2026-06-25-kompress-heretic-eval)
 - 🔧 [Headroom — the proxy that uses kompress](https://github.com/headroomlabs-ai/headroom)
 - 🧪 [Heretic — adversarial ablation testing](https://github.com/p-e-w/heretic)
